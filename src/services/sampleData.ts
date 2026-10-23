@@ -1,0 +1,156 @@
+import { SignageConfig } from '../types/signage';
+
+export const DEFAULT_SIGNAGE_CONFIG: SignageConfig = {
+  slides: [
+    {
+      id: 'slide-1',
+      title: 'Promo Cuci Kiloan Wangi Semerbak',
+      type: 'image',
+      url: 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?auto=format&fit=crop&w=1600&q=80',
+      duration: 8,
+      autoDuration: false,
+      muteVideoAudio: false,
+      videoVolume: 100,
+      transition: 'fade',
+      isActive: true,
+      order: 1,
+      schedule: {
+        allDays: true,
+        days: [0, 1, 2, 3, 4, 5, 6],
+        allHours: true,
+      },
+    },
+    {
+      id: 'slide-2',
+      title: 'Video Edukasi Higienitas Jasmine Laundry',
+      type: 'video',
+      // High-quality reliable public MP4 video suitable for demo TV playback
+      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+      duration: 15,
+      autoDuration: true, // Auto-advance when video ends!
+      muteVideoAudio: false, // Video audio will play; backsound will auto-mute!
+      videoVolume: 90,
+      transition: 'fade',
+      isActive: true,
+      order: 2,
+      schedule: {
+        allDays: true,
+        days: [0, 1, 2, 3, 4, 5, 6],
+        allHours: true,
+      },
+    },
+    {
+      id: 'slide-3',
+      title: 'Layanan Express 3 Jam Siap Pakai',
+      type: 'image',
+      url: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?auto=format&fit=crop&w=1600&q=80',
+      duration: 10,
+      autoDuration: false,
+      muteVideoAudio: false,
+      videoVolume: 100,
+      transition: 'slide',
+      isActive: true,
+      order: 3,
+      schedule: {
+        allDays: true,
+        days: [0, 1, 2, 3, 4, 5, 6],
+        allHours: true,
+      },
+    },
+    {
+      id: 'slide-4',
+      title: 'Video Teaser Layanan Jasmine Care',
+      type: 'video',
+      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
+      duration: 12,
+      autoDuration: true,
+      muteVideoAudio: false,
+      videoVolume: 85,
+      transition: 'zoom',
+      isActive: true,
+      order: 4,
+      schedule: {
+        allDays: true,
+        days: [0, 1, 2, 3, 4, 5, 6],
+        allHours: true,
+      },
+    },
+    {
+      id: 'slide-5',
+      title: 'Cuci Sepatu & Tas Premium Treatment',
+      type: 'image',
+      url: 'https://images.unsplash.com/photo-1582735689369-4fe89db7114c?auto=format&fit=crop&w=1600&q=80',
+      duration: 8,
+      autoDuration: false,
+      muteVideoAudio: false,
+      videoVolume: 100,
+      transition: 'fade',
+      isActive: true,
+      order: 5,
+      schedule: {
+        allDays: true,
+        days: [0, 1, 2, 3, 4, 5, 6],
+        allHours: true,
+      },
+    },
+  ],
+  ticker: {
+    enabled: true,
+    messages: [
+      '✨ Selamat Datang di JASMINE LAUNDRY - Pakaian Bersih, Wangi, Higienis & Rapi Setiap Hari',
+      '🔥 PROMO SPESIAL: Cuci Kiloan Diskon 20% khusus member baru! Daftarkan nomor WhatsApp Anda di kasir',
+      '⚡ LAYANAN EXPRESS 3 JAM: Cucian darurat langsung kering & rapi siap pakai',
+      '🧴 Kami menggunakan deterjen premium ramah serat kain dan pelembut antibakteri bersertifikat',
+      '📞 Hubungi WhatsApp Customer Care: 0812-3456-7890 | Buka Setiap Hari: 07.00 - 21.00 WIB',
+    ],
+    separator: '   ✦   ',
+    speed: 'normal',
+    bgColor: '#0f766e', // Jasmine Teal Theme
+    textColor: '#ffffff',
+    fontSize: 28,
+    showBadge: true,
+    badgeText: 'INFO TERBARU',
+  },
+  audio: {
+    enabled: true,
+    // Royalty-free acoustic cafe / lounge stream/mp3 or clean loop
+    url: 'https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg',
+    title: 'Warm Acoustic & Cafe Atmosphere (BGM Looping)',
+    volume: 55,
+    loop: true,
+    autoMuteOnVideo: true, // CRITICAL: Auto-mute backsound when video plays!
+    fadeTransition: true,
+  },
+  layout: {
+    style: 'splitscreen', // Default to split-screen showing both video/images and Jasmine Laundry service & price menu!
+    showClock: true,
+    showDate: true,
+    showLogo: true,
+    brandName: 'JASMINE LAUNDRY',
+    tagline: 'Professional Laundry & Dry Cleaning Service',
+    accentColor: '#0d9488',
+    sidebarTitle: 'DAFTAR LAYANAN & HARGA',
+    prices: [
+      { name: 'Cuci + Kering + Setrika', price: 'Rp 8.000', unit: '/ kg', badge: 'Terlaris' },
+      { name: 'Cuci Kering Lipat', price: 'Rp 6.000', unit: '/ kg' },
+      { name: 'Layanan Express 3 Jam', price: 'Rp 14.000', unit: '/ kg', badge: 'Cepat' },
+      { name: 'Setrika Uap Wangi', price: 'Rp 5.000', unit: '/ kg' },
+      { name: 'Bedcover Single / Double', price: 'Rp 25.000', unit: '/ pcs' },
+      { name: 'Deep Clean Sepatu Sneakers', price: 'Rp 30.000', unit: '/ pasang', badge: 'Premium' },
+    ],
+    infoCards: [
+      {
+        title: 'Garansi Bersih & Wangi',
+        description: 'Jika kurang wangi atau kurang rapi, cuci ulang gratis tanpa biaya!',
+        icon: 'Sparkles',
+      },
+      {
+        title: 'Gratis Antar Jemput',
+        description: 'Radius 3 km untuk pemesanan minimal 5 kg. Hubungi admin kami.',
+        icon: 'Truck',
+      },
+    ],
+  },
+  lastUpdated: new Date().toISOString(),
+  version: 1,
+};
