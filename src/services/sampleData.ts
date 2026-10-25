@@ -130,6 +130,7 @@ export const DEFAULT_SIGNAGE_CONFIG: SignageConfig = {
     tagline: 'Professional Laundry & Dry Cleaning Service',
     accentColor: '#0d9488',
     sidebarTitle: 'DAFTAR LAYANAN & HARGA',
+    tvScale: 100,
     prices: [
       { name: 'Cuci + Kering + Setrika', price: 'Rp 8.000', unit: '/ kg', badge: 'Terlaris' },
       { name: 'Cuci Kering Lipat', price: 'Rp 6.000', unit: '/ kg' },

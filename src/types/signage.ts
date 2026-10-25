@@ -63,6 +63,7 @@ export interface LayoutConfig {
   logoUrl?: string;
   accentColor: string;
   sidebarTitle: string;
+  tvScale?: number; // 75, 80, 85, 90, 100 (%) for TVBro zoom scaling
   prices: PriceItem[];
   infoCards: Array<{
     title: string;

@@ -49,7 +49,7 @@ export const TVHeader: React.FC<TVHeaderProps> = ({
   const isVideoWithSound = isVideoSlide && !currentSlide?.muteVideoAudio;
 
   return (
-    <header className="relative w-full z-20 flex items-center justify-between px-6 py-3 bg-gradient-to-b from-black/85 via-black/60 to-transparent backdrop-blur-[2px] text-white select-none">
+    <header className="relative w-full z-20 shrink-0 flex items-center justify-between px-5 py-2.5 bg-gradient-to-b from-black/90 via-black/70 to-transparent backdrop-blur-[2px] text-white select-none">
       {/* Brand & Logo */}
       <div className="flex items-center gap-3">
         {layout.showLogo && (

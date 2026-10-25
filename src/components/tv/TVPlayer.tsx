@@ -231,9 +231,19 @@ export const TVPlayer: React.FC<TVPlayerProps> = ({ config, onOpenAdmin, isSimul
   return (
     <div
       ref={containerRef}
-      className={`relative w-full h-full min-h-screen bg-slate-950 text-white flex flex-col overflow-hidden select-none font-sans ${
+      className={`relative w-full h-screen max-h-screen overflow-hidden bg-slate-950 text-white flex flex-col select-none font-sans ${
         isSimulated ? 'rounded-2xl border-4 border-slate-700 shadow-2xl' : ''
       }`}
+      style={
+        (config.layout.tvScale && config.layout.tvScale !== 100 && !isSimulated)
+          ? {
+              transform: `scale(${config.layout.tvScale / 100})`,
+              transformOrigin: 'top left',
+              width: `${(100 / config.layout.tvScale) * 100}vw`,
+              height: `${(100 / config.layout.tvScale) * 100}vh`,
+            }
+          : undefined
+      }
     >
       {/* Top Header */}
       <TVHeader
@@ -253,9 +263,9 @@ export const TVPlayer: React.FC<TVPlayerProps> = ({ config, onOpenAdmin, isSimul
       />
 
       {/* Main Content Area */}
-      <div className="relative flex-1 flex overflow-hidden">
+      <div className="relative flex-1 min-h-0 w-full flex overflow-hidden">
         {/* Media Player Showcase */}
-        <main className="relative flex-1 h-full bg-black flex items-center justify-center overflow-hidden">
+        <main className="relative flex-1 min-h-0 h-full bg-black flex items-center justify-center overflow-hidden">
           {currentSlide ? (
             <div className="relative w-full h-full flex items-center justify-center">
               {currentSlide.type === 'video' ? (

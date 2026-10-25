@@ -8,22 +8,22 @@ interface TVSidebarProps {
 
 export const TVSidebar: React.FC<TVSidebarProps> = ({ layout }) => {
   return (
-    <aside className="w-80 md:w-96 lg:w-[410px] shrink-0 h-full flex flex-col bg-slate-950/85 backdrop-blur-xl border-l border-white/10 text-white p-5 overflow-hidden select-none shadow-2xl">
+    <aside className="w-72 md:w-80 lg:w-[380px] shrink-0 h-full flex flex-col bg-slate-950/85 backdrop-blur-xl border-l border-white/10 text-white p-4 overflow-hidden select-none shadow-2xl">
       {/* Title */}
-      <div className="flex items-center gap-2.5 pb-4 border-b border-teal-500/30">
-        <div className="p-2 rounded-lg bg-teal-500/20 text-teal-400">
-          <Tag className="w-5 h-5" />
+      <div className="flex items-center gap-2 pb-3 border-b border-teal-500/30">
+        <div className="p-1.5 rounded-lg bg-teal-500/20 text-teal-400">
+          <Tag className="w-4 h-4" />
         </div>
         <div>
-          <h2 className="text-base font-bold tracking-wide uppercase text-teal-300">
+          <h2 className="text-sm font-bold tracking-wide uppercase text-teal-300">
             {layout.sidebarTitle || 'DAFTAR LAYANAN & HARGA'}
           </h2>
-          <p className="text-xs text-slate-400">Jasmine Laundry Bersih &amp; Terpercaya</p>
+          <p className="text-[11px] text-slate-400">Jasmine Laundry Bersih &amp; Terpercaya</p>
         </div>
       </div>
 
       {/* Price Items */}
-      <div className="flex-1 py-4 space-y-2.5 overflow-y-auto no-scrollbar">
+      <div className="flex-1 min-h-0 py-3 space-y-2 overflow-y-auto no-scrollbar">
         {layout.prices && layout.prices.map((item, idx) => (
           <div
             key={idx}

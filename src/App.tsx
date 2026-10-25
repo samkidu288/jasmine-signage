@@ -86,35 +86,6 @@ export default function App() {
 
   return (
     <div className="relative w-full h-full min-h-screen bg-black">
-      {/* Floating Mode Switcher (Discreet bar at the top for testing domains & previews) */}
-      <div className="fixed top-2 right-4 z-50 flex items-center gap-1.5 p-1 rounded-2xl bg-slate-950/80 backdrop-blur-md border border-slate-700/60 shadow-2xl opacity-60 hover:opacity-100 transition-opacity">
-        <button
-          onClick={() => switchMode('tv')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition ${
-            currentMode === 'tv'
-              ? 'bg-teal-500 text-slate-950 shadow-md'
-              : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-          }`}
-          title="Mode TV Player (signage.jasminelaundry.my.id)"
-        >
-          <Tv className="w-3.5 h-3.5" />
-          <span>Layar TV Bro</span>
-        </button>
-
-        <button
-          onClick={() => switchMode('admin')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition ${
-            currentMode === 'admin'
-              ? 'bg-teal-500 text-slate-950 shadow-md'
-              : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-          }`}
-          title="Mode CMS Admin (adminsignage.jasminelaundry.my.id)"
-        >
-          <Shield className="w-3.5 h-3.5" />
-          <span>Dashboard CMS</span>
-        </button>
-      </div>
-
       {/* Render Active View */}
       {currentMode === 'tv' ? (
         <TVPlayer config={config} onOpenAdmin={() => switchMode('admin')} />

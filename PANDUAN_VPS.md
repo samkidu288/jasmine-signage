@@ -67,8 +67,9 @@ Panduan ini ditujukan untuk **samkidu288** dalam melakukan upload melalui GitHub
 
 1. **Install seluruh package**:
    ```bash
-   npm install
+   npm install --legacy-peer-deps
    ```
+   *(Catatan: Flag `--legacy-peer-deps` mencegah bug Arborist `edgesOut` bawaan npm saat meresolusi React 19).*
 
 2. **Buat file `.env`**:
    ```bash

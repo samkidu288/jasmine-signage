@@ -22,7 +22,7 @@ export const RunningTicker: React.FC<RunningTickerProps> = ({ config }) => {
 
   return (
     <div
-      className="relative w-full overflow-hidden flex items-stretch z-30 select-none shadow-2xl border-t border-white/15"
+      className="relative w-full shrink-0 overflow-hidden flex items-stretch z-30 select-none shadow-2xl border-t border-white/15"
       style={{
         backgroundColor: config.bgColor || '#0f766e',
         color: config.textColor || '#ffffff',

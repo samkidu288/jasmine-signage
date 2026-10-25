@@ -1,6 +1,8 @@
 {
-  "name": "Jasmine Signage - TV Digital Signage & CMS",
+  "name": "Jasmine Signage",
   "description": "Sistem Digital Signage Android TV & CMS terpusat Jasmine Laundry dengan pemutar video/gambar dinamis, running text, dan backsound auto-mute otomatis saat video.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

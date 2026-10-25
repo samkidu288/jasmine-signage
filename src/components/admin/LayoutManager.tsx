@@ -1,6 +1,6 @@
 import React from 'react';
 import { LayoutConfig, PriceItem } from '../../types/signage';
-import { Layout, Clock, Calendar, Sparkles, Plus, Trash2, Tag, Palette } from 'lucide-react';
+import { Layout, Clock, Calendar, Sparkles, Plus, Trash2, Tag, Palette, Tv } from 'lucide-react';
 
 interface LayoutManagerProps {
   layout: LayoutConfig;
@@ -103,6 +103,62 @@ export const LayoutManager: React.FC<LayoutManagerProps> = ({ layout, onChange }
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* TV Screen Resolution & Scaling for TCL 43" & TVBro */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-base font-bold text-white flex items-center gap-2">
+            <Tv className="w-5 h-5 text-teal-400" />
+            Skala &amp; Pas Layar Android TV (TV TCL 43&quot; / TVBro)
+          </h3>
+          <span className="text-xs font-mono font-bold text-teal-300 px-3 py-1 rounded-full bg-teal-500/20 border border-teal-500/30">
+            {layout.tvScale || 100}%
+          </span>
+        </div>
+        <p className="text-xs text-slate-400 mb-4">
+          Gunakan opsi ini jika tampilan di layar Android TV terlalu besar sehingga teks berjalan terpotong ke bawah.
+          Pilih <b>90%</b> atau <b>85%</b> agar seluruh tampilan (Header, Video/Gambar, dan Running Text) langsung pas 100% tanpa perlu scroll.
+        </p>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          {[
+            { label: '100% (Normal)', value: 100, desc: 'Standar 1080p' },
+            { label: '90% (TV TCL)', value: 90, desc: 'Rekomendasi 43"' },
+            { label: '85% (Kompak)', value: 85, desc: 'Pas tanpa scroll' },
+            { label: '80% (Ekstra)', value: 80, desc: 'Sangat luas' },
+          ].map((preset) => (
+            <button
+              key={preset.value}
+              type="button"
+              onClick={() => onChange({ ...layout, tvScale: preset.value })}
+              className={`p-3 rounded-xl border text-left transition ${
+                (layout.tvScale || 100) === preset.value
+                  ? 'bg-teal-500/20 border-teal-500 text-teal-300 ring-2 ring-teal-500/30'
+                  : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-white'
+              }`}
+            >
+              <div className="font-bold text-xs text-white">{preset.label}</div>
+              <div className="text-[10px] text-slate-400 mt-0.5">{preset.desc}</div>
+            </button>
+          ))}
+        </div>
+
+        <div>
+          <div className="flex justify-between text-xs text-slate-400 mb-1">
+            <span>Atur Halus Skala:</span>
+            <span className="font-mono text-teal-300 font-bold">{layout.tvScale || 100}%</span>
+          </div>
+          <input
+            type="range"
+            min="70"
+            max="100"
+            step="1"
+            value={layout.tvScale || 100}
+            onChange={(e) => onChange({ ...layout, tvScale: parseInt(e.target.value) || 100 })}
+            className="w-full accent-teal-500"
+          />
         </div>
       </div>
 
