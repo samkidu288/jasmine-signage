@@ -4,7 +4,6 @@ import { DEFAULT_SIGNAGE_CONFIG } from './sampleData';
 const STORAGE_KEY = 'jasmine_signage_config_v2';
 const BROADCAST_CHANNEL_NAME = 'jasmine_signage_broadcast';
 
-// Create BroadcastChannel for real-time inter-tab/browser updates
 let broadcastChannel: BroadcastChannel | null = null;
 if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
   try {
@@ -14,11 +13,7 @@ if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
   }
 }
 
-/**
- * Get signage configuration from local storage or server
- */
 export async function getSignageConfig(): Promise<SignageConfig> {
-  // 1. First check localStorage for immediate render
   let localData: SignageConfig | null = null;
   if (typeof window !== 'undefined') {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -31,14 +26,12 @@ export async function getSignageConfig(): Promise<SignageConfig> {
     }
   }
 
-  // 2. Fetch from server in background or if localData is null
   try {
     const res = await fetch('/api/signage');
     if (res.ok) {
       const json = await res.json();
       if (json && json.success && json.data) {
         const serverData: SignageConfig = json.data;
-        // If server data is newer or local is missing, use server data
         if (!localData || (serverData.version && serverData.version >= (localData.version || 0))) {
           if (typeof window !== 'undefined') {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(serverData));
@@ -47,50 +40,35 @@ export async function getSignageConfig(): Promise<SignageConfig> {
         }
       }
     }
-  } catch (err) {
-    // Server might be offline or client-only preview, ignore
-  }
+  } catch (err) {}
 
-  // 3. Fallback to local or default
   if (!localData) {
     localData = DEFAULT_SIGNAGE_CONFIG;
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(localData));
     }
   }
-
   return localData;
 }
 
-/**
- * Save signage configuration locally and sync to server
- */
 export async function saveSignageConfig(config: SignageConfig): Promise<boolean> {
   const updatedConfig: SignageConfig = {
     ...config,
-    version: (config.version || 1) + 1,
     lastUpdated: new Date().toISOString(),
+    version: (config.version || 1) + 1,
   };
 
-  // 1. Save to local storage
   if (typeof window !== 'undefined') {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedConfig));
-    } catch (e) {
-      console.error('Error saving to localStorage', e);
-    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedConfig));
   }
 
-  // 2. Broadcast to other open windows/TV tabs
   if (broadcastChannel) {
-    try {
-      broadcastChannel.postMessage({ type: 'CONFIG_UPDATED', config: updatedConfig });
-    } catch (e) {
-      console.warn('Failed to broadcast message', e);
-    }
+    broadcastChannel.postMessage({
+      type: 'CONFIG_UPDATED',
+      config: updatedConfig,
+    });
   }
 
-  // 3. Save to server API
   try {
     const res = await fetch('/api/signage', {
       method: 'POST',
@@ -99,14 +77,10 @@ export async function saveSignageConfig(config: SignageConfig): Promise<boolean>
     });
     return res.ok;
   } catch (err) {
-    console.warn('Server offline, saved locally only', err);
-    return true; // Still true because saved locally
+    return false;
   }
 }
 
-/**
- * Reset to default Jasmine Laundry configuration
- */
 export async function resetSignageConfig(): Promise<SignageConfig> {
   const freshConfig: SignageConfig = {
     ...DEFAULT_SIGNAGE_CONFIG,
@@ -117,61 +91,58 @@ export async function resetSignageConfig(): Promise<SignageConfig> {
   return freshConfig;
 }
 
-/**
- * Upload a media file (Image, Video, or Audio)
- * Falls back to Data URL in browser if server upload fails
- */
-export async function uploadMedia(file: File): Promise<{ url: string; filename: string; type: 'image' | 'video' | 'audio' }> {
-  let fileType: 'image' | 'video' | 'audio' = 'image';
-  if (file.type.startsWith('video/')) fileType = 'video';
-  else if (file.type.startsWith('audio/')) fileType = 'audio';
+export function uploadMedia(
+  file: File,
+  onProgress?: (percent: number, loadedBytes: number, totalBytes: number) => void
+): Promise<{ url: string; filename: string; type: 'image' | 'video' | 'audio' }> {
+  return new Promise((resolve, reject) => {
+    let fileType: 'image' | 'video' | 'audio' = 'image';
+    if (file.type.startsWith('video/')) fileType = 'video';
+    else if (file.type.startsWith('audio/')) fileType = 'audio';
 
-  // Read file as base64
-  const base64Data = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('fileType', fileType);
 
-  try {
-    const res = await fetch('/api/upload', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        filename: file.name,
-        fileData: base64Data,
-        fileType,
-      }),
-    });
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/upload', true);
 
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success && data.url) {
-        return {
-          url: data.url,
-          filename: data.filename || file.name,
-          type: fileType,
-        };
-      }
+    if (xhr.upload && onProgress) {
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const percent = Math.min(100, Math.round((e.loaded / e.total) * 100));
+          onProgress(percent, e.loaded, e.total);
+        }
+      };
     }
-  } catch (err) {
-    console.warn('Server upload unavailable, using Data URL in-memory', err);
-  }
 
-  // Fallback to Data URL
-  return {
-    url: base64Data,
-    filename: file.name,
-    type: fileType,
-  };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          if (data && data.success && data.url) {
+            if (onProgress) onProgress(100, file.size, file.size);
+            resolve({
+              url: data.url,
+              filename: data.filename || file.name,
+              type: fileType,
+            });
+            return;
+          }
+        } catch (e) {}
+      }
+      reject(new Error(`Upload gagal (Status ${xhr.status}): ${xhr.statusText || 'Kesalahan server'}`));
+    };
+
+    xhr.onerror = () => {
+      reject(new Error('Koneksi terputus saat mengunggah file ke server.'));
+    };
+
+    xhr.send(formData);
+  });
 }
 
-/**
- * Subscribe to real-time configuration changes (BroadcastChannel + polling fallback)
- */
 export function subscribeToConfigUpdates(callback: (config: SignageConfig) => void): () => void {
-  // BroadcastChannel listener
   const handleBroadcast = (event: MessageEvent) => {
     if (event.data && event.data.type === 'CONFIG_UPDATED' && event.data.config) {
       callback(event.data.config);
@@ -182,21 +153,17 @@ export function subscribeToConfigUpdates(callback: (config: SignageConfig) => vo
     broadcastChannel.addEventListener('message', handleBroadcast);
   }
 
-  // LocalStorage storage event listener (cross-tab in standard browsers)
   const handleStorage = (e: StorageEvent) => {
     if (e.key === STORAGE_KEY && e.newValue) {
       try {
         const parsed = JSON.parse(e.newValue);
         callback(parsed);
-      } catch (err) {
-        // ignore
-      }
+      } catch (err) {}
     }
   };
 
   window.addEventListener('storage', handleStorage);
 
-  // Background polling for TVBro (polling every 10 seconds to catch remote updates from Admin server)
   const pollInterval = setInterval(async () => {
     try {
       const res = await fetch('/api/signage');
@@ -214,9 +181,7 @@ export function subscribeToConfigUpdates(callback: (config: SignageConfig) => vo
           }
         }
       }
-    } catch {
-      // server unreachable
-    }
+    } catch {}
   }, 8000);
 
   return () => {

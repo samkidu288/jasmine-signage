@@ -9,7 +9,7 @@ import { Volume2, Play, Settings, AlertCircle, RefreshCw } from 'lucide-react';
 interface TVPlayerProps {
   config: SignageConfig;
   onOpenAdmin: () => void;
-  isSimulated?: boolean; // When rendered inside admin dashboard simulator
+  isSimulated?: boolean;
 }
 
 export const TVPlayer: React.FC<TVPlayerProps> = ({ config, onOpenAdmin, isSimulated = false }) => {
@@ -25,10 +25,9 @@ export const TVPlayer: React.FC<TVPlayerProps> = ({ config, onOpenAdmin, isSimul
   const progressTimerRef = useRef<any>(null);
   const slideTimerRef = useRef<any>(null);
 
-  // Filter active slides matching schedule
   const activeSlides = React.useMemo(() => {
     const now = new Date();
-    const currentDay = now.getDay(); // 0 = Sun
+    const currentDay = now.getDay();
     const currentHourMin = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
     const filtered = config.slides.filter((slide) => {
@@ -50,31 +49,25 @@ export const TVPlayer: React.FC<TVPlayerProps> = ({ config, onOpenAdmin, isSimul
 
   const currentSlide: SlideItem | null = activeSlides[currentIndex] || activeSlides[0] || null;
 
-  // Initialize background audio controller
   useEffect(() => {
     soundController.setConfig(config.audio);
 
-    // Try playing BGM if enabled
     if (config.audio.enabled && !isSimulated) {
       soundController.play().then((started) => {
         if (!started) {
-          // Autoplay blocked by browser policy -> show audio unlock banner
           setIsAudioPromptVisible(true);
         }
       });
     }
   }, [config.audio, isSimulated]);
 
-  // Request Screen Wake Lock so Android TV / TVBro doesn't sleep
   useEffect(() => {
     if (typeof navigator !== 'undefined' && 'wakeLock' in navigator && !isSimulated) {
       let wakeLock: any = null;
       const requestLock = async () => {
         try {
           wakeLock = await (navigator as any).wakeLock.request('screen');
-        } catch (err) {
-          // Wake lock request failed or denied
-        }
+        } catch (err) {}
       };
       requestLock();
 
@@ -92,39 +85,28 @@ export const TVPlayer: React.FC<TVPlayerProps> = ({ config, onOpenAdmin, isSimul
     }
   }, [isSimulated]);
 
-  // Go to next slide
   const nextSlide = useCallback(() => {
-    setCurrentIndex((prev) => {
-      const nextIdx = (prev + 1) % activeSlides.length;
-      return nextIdx;
-    });
+    setCurrentIndex((prev) => (prev + 1) % activeSlides.length);
     setSlideProgress(0);
     setLoadError(null);
   }, [activeSlides.length]);
 
-  // Go to previous slide
   const prevSlide = useCallback(() => {
     setCurrentIndex((prev) => (prev - 1 + activeSlides.length) % activeSlides.length);
     setSlideProgress(0);
     setLoadError(null);
   }, [activeSlides.length]);
 
-  // Main slide rotation timer & audio management
   useEffect(() => {
     if (!currentSlide || isPaused) return;
 
-    // Trigger audio transition: AUTO-MUTES if video, RESTORES if image!
     soundController.handleSlideTransition(currentSlide, config.audio);
 
-    // Clear previous timers
     clearInterval(progressTimerRef.current);
     clearTimeout(slideTimerRef.current);
     setSlideProgress(0);
 
     const isVideo = currentSlide.type === 'video';
-
-    // If it's a video and autoDuration is enabled, the onEnded event will trigger nextSlide.
-    // However, we also add a safety fallback timeout in case the video hangs or is very long
     const durationSec = currentSlide.duration > 0 ? currentSlide.duration : 15;
     const durationMs = durationSec * 1000;
 
@@ -133,15 +115,19 @@ export const TVPlayer: React.FC<TVPlayerProps> = ({ config, onOpenAdmin, isSimul
 
     progressTimerRef.current = setInterval(() => {
       elapsed += intervalTime;
-      const p = Math.min(100, (elapsed / durationMs) * 100);
-      setSlideProgress(p);
+      if (!isVideo) {
+        const p = Math.min(100, (elapsed / durationMs) * 100);
+        setSlideProgress(p);
+      }
     }, intervalTime);
 
-    if (!isVideo || !currentSlide.autoDuration) {
-      slideTimerRef.current = setTimeout(() => {
-        nextSlide();
-      }, durationMs);
-    }
+    const watchdogMs = isVideo && currentSlide.autoDuration
+      ? Math.max(durationMs, 25000)
+      : durationMs;
+
+    slideTimerRef.current = setTimeout(() => {
+      nextSlide();
+    }, watchdogMs);
 
     return () => {
       clearInterval(progressTimerRef.current);
@@ -149,28 +135,85 @@ export const TVPlayer: React.FC<TVPlayerProps> = ({ config, onOpenAdmin, isSimul
     };
   }, [currentIndex, currentSlide, isPaused, config.audio, nextSlide]);
 
-  // Video event handlers
+  useEffect(() => {
+    if (videoRef.current && currentSlide?.type === 'video') {
+      const vid = videoRef.current;
+      vid.currentTime = 0;
+      vid.muted = true;
+
+      const attemptPlay = async () => {
+        try {
+          await vid.play();
+          if (!currentSlide.muteVideoAudio) {
+            vid.volume = (currentSlide.videoVolume ?? 100) / 100;
+            vid.muted = false;
+            if (vid.paused) {
+              vid.muted = true;
+              await vid.play();
+              setIsAudioPromptVisible(true);
+            }
+          }
+        } catch (err) {
+          vid.muted = true;
+          vid.play().catch(() => {});
+          setIsAudioPromptVisible(true);
+        }
+      };
+
+      attemptPlay();
+    }
+  }, [currentSlide]);
+
+  const handleLoadedMetadata = () => {
+    if (videoRef.current && currentSlide?.type === 'video' && currentSlide.autoDuration) {
+      const vidDuration = videoRef.current.duration;
+      if (vidDuration && !isNaN(vidDuration) && isFinite(vidDuration) && vidDuration > 0) {
+        clearTimeout(slideTimerRef.current);
+        const videoDurationMs = Math.ceil(vidDuration * 1000) + 1500;
+        slideTimerRef.current = setTimeout(() => {
+          nextSlide();
+        }, videoDurationMs);
+      }
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (videoRef.current && currentSlide?.type === 'video') {
+      const { currentTime, duration } = videoRef.current;
+      if (duration > 0) {
+        setSlideProgress(Math.min(100, (currentTime / duration) * 100));
+      }
+    }
+  };
+
   const handleVideoEnded = () => {
-    if (currentSlide?.type === 'video' && currentSlide.autoDuration) {
+    if (currentSlide?.type === 'video') {
+      clearTimeout(slideTimerRef.current);
       nextSlide();
     }
   };
 
-  const handleVideoError = () => {
-    setLoadError('Gagal memuat video. Melompat ke slide berikutnya...');
+  const handleVideoError = (e: any) => {
+    soundController.handleSlideTransition({ type: 'image' } as any, config.audio);
+    setLoadError('Format video tidak didukung oleh browser TV. Melompat...');
+    clearTimeout(slideTimerRef.current);
     setTimeout(() => {
       nextSlide();
-    }, 3000);
+    }, 2000);
   };
 
-  // User unlocks audio via remote / touch / mouse
   const handleUnlockAudio = () => {
+    soundController.setConfig(config.audio);
     soundController.play().then(() => {
       setIsAudioPromptVisible(false);
     });
+    if (videoRef.current && currentSlide?.type === 'video') {
+      videoRef.current.muted = !!currentSlide.muteVideoAudio;
+      videoRef.current.volume = (currentSlide.videoVolume ?? 100) / 100;
+      videoRef.current.play().catch(() => {});
+    }
   };
 
-  // Toggle fullscreen
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
     if (!document.fullscreenElement) {
@@ -182,15 +225,19 @@ export const TVPlayer: React.FC<TVPlayerProps> = ({ config, onOpenAdmin, isSimul
     }
   };
 
-  // Keyboard navigation for TV Remote Control
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // If prompt is visible, any key dismisses and unlocks audio
       if (isAudioPromptVisible) {
         handleUnlockAudio();
       }
 
       switch (e.key) {
+        case 'Enter':
+        case 'Select':
+        case 'MediaPlayPause':
+        case 'MediaPlay':
+          handleUnlockAudio();
+          break;
         case 'ArrowRight':
         case 'PageDown':
           nextSlide();
@@ -219,7 +266,6 @@ export const TVPlayer: React.FC<TVPlayerProps> = ({ config, onOpenAdmin, isSimul
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isAudioPromptVisible, nextSlide, prevSlide, onOpenAdmin]);
 
-  // Track fullscreen changes from browser
   useEffect(() => {
     const onFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
@@ -231,11 +277,25 @@ export const TVPlayer: React.FC<TVPlayerProps> = ({ config, onOpenAdmin, isSimul
   return (
     <div
       ref={containerRef}
-      className={`relative w-full h-full min-h-screen bg-slate-950 text-white flex flex-col overflow-hidden select-none font-sans ${
+      onClick={() => {
+        if (isAudioPromptVisible) {
+          handleUnlockAudio();
+        }
+      }}
+      className={`relative w-full h-screen max-h-screen overflow-hidden bg-slate-950 text-white flex flex-col select-none font-sans ${
         isSimulated ? 'rounded-2xl border-4 border-slate-700 shadow-2xl' : ''
       }`}
+      style={
+        (config.layout.tvScale && config.layout.tvScale !== 100 && !isSimulated)
+          ? {
+              transform: `scale(${config.layout.tvScale / 100})`,
+              transformOrigin: 'top left',
+              width: `${(100 / config.layout.tvScale) * 100}vw`,
+              height: `${(100 / config.layout.tvScale) * 100}vh`,
+            }
+          : undefined
+      }
     >
-      {/* Top Header */}
       <TVHeader
         layout={config.layout}
         currentSlide={currentSlide}
@@ -252,10 +312,8 @@ export const TVPlayer: React.FC<TVPlayerProps> = ({ config, onOpenAdmin, isSimul
         }}
       />
 
-      {/* Main Content Area */}
-      <div className="relative flex-1 flex overflow-hidden">
-        {/* Media Player Showcase */}
-        <main className="relative flex-1 h-full bg-black flex items-center justify-center overflow-hidden">
+      <div className="relative flex-1 min-h-0 w-full flex overflow-hidden">
+        <main className="relative flex-1 min-h-0 h-full bg-black flex items-center justify-center overflow-hidden">
           {currentSlide ? (
             <div className="relative w-full h-full flex items-center justify-center">
               {currentSlide.type === 'video' ? (
@@ -265,7 +323,10 @@ export const TVPlayer: React.FC<TVPlayerProps> = ({ config, onOpenAdmin, isSimul
                   src={currentSlide.url}
                   autoPlay
                   playsInline
-                  muted={currentSlide.muteVideoAudio}
+                  preload="auto"
+                  muted
+                  onLoadedMetadata={handleLoadedMetadata}
+                  onTimeUpdate={handleTimeUpdate}
                   onEnded={handleVideoEnded}
                   onError={handleVideoError}
                   className="w-full h-full object-contain bg-black"
@@ -291,22 +352,34 @@ export const TVPlayer: React.FC<TVPlayerProps> = ({ config, onOpenAdmin, isSimul
 
               {/* Slide Title Tag Overlay */}
               <div className="absolute bottom-4 left-6 z-20 pointer-events-none">
-                <div className="px-4 py-2 rounded-xl bg-black/60 backdrop-blur-md border border-white/15 text-white shadow-xl max-w-md">
+                <div className="px-4 py-2.5 rounded-2xl bg-black/65 backdrop-blur-md border border-white/15 text-white shadow-2xl max-w-lg">
+                  {/* Baris 1: Text Atas Kustom atau Default */}
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-teal-500 text-slate-950">
-                      {currentSlide.type === 'video' ? '🎬 Video' : '🖼️ Gambar'}
-                    </span>
-                    <span className="text-xs text-slate-300">
-                      Slide {currentIndex + 1} dari {activeSlides.length}
-                    </span>
+                    {currentSlide.topText && currentSlide.topText.trim() ? (
+                      <span className="text-[11px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-teal-500 text-slate-950 truncate max-w-md shadow-sm">
+                        {currentSlide.topText.trim()}
+                      </span>
+                    ) : (
+                      <>
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-teal-500 text-slate-950">
+                          {currentSlide.type === 'video' ? '🎬 Video' : '🖼️ Gambar'}
+                        </span>
+                        <span className="text-xs text-slate-300">
+                          Slide {currentIndex + 1} dari {activeSlides.length}
+                        </span>
+                      </>
+                    )}
                   </div>
-                  <h3 className="text-base font-bold text-white mt-1 drop-shadow-sm truncate">
-                    {currentSlide.title}
-                  </h3>
+
+                  {/* Baris 2: Judul / Text Bawah */}
+                  {currentSlide.title && (
+                    <h3 className="text-base font-bold text-white mt-1 drop-shadow-sm truncate">
+                      {currentSlide.title}
+                    </h3>
+                  )}
                 </div>
               </div>
 
-              {/* Slide Progress Indicator Bar */}
               <div className="absolute top-0 left-0 right-0 h-1 bg-white/10 z-20 overflow-hidden">
                 <div
                   className="h-full bg-teal-400 transition-all duration-100 ease-linear shadow-glow"
@@ -324,7 +397,6 @@ export const TVPlayer: React.FC<TVPlayerProps> = ({ config, onOpenAdmin, isSimul
             </div>
           )}
 
-          {/* Load Error Alert */}
           {loadError && (
             <div className="absolute top-4 z-30 flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600/90 text-white text-xs font-semibold shadow-xl backdrop-blur-md">
               <AlertCircle className="w-4 h-4" />
@@ -333,14 +405,11 @@ export const TVPlayer: React.FC<TVPlayerProps> = ({ config, onOpenAdmin, isSimul
           )}
         </main>
 
-        {/* Optional Sidebar (Split-screen mode) */}
         {config.layout.style === 'splitscreen' && <TVSidebar layout={config.layout} />}
       </div>
 
-      {/* Bottom Running Text Marquee */}
       <RunningTicker config={config.ticker} />
 
-      {/* TVBro / Android TV Audio Unlock Prompt */}
       {isAudioPromptVisible && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-fadeIn">
           <div className="max-w-md w-full bg-slate-900 border-2 border-teal-500/60 rounded-3xl p-6 text-center shadow-2xl ring-4 ring-teal-500/20">
@@ -368,7 +437,6 @@ export const TVPlayer: React.FC<TVPlayerProps> = ({ config, onOpenAdmin, isSimul
         </div>
       )}
 
-      {/* Floating Discreet Button to Open Admin CMS or Switch Mode */}
       {!isSimulated && (
         <div className="absolute top-3 left-3 z-40 opacity-20 hover:opacity-100 transition-opacity">
           <button

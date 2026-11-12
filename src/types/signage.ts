@@ -5,6 +5,7 @@ export type TransitionType = 'fade' | 'slide' | 'zoom' | 'none';
 export interface SlideItem {
   id: string;
   title: string;
+  topText?: string; // Customizable top caption text (Baris 1)
   type: MediaType;
   url: string;
   thumbnail?: string;
@@ -17,10 +18,10 @@ export interface SlideItem {
   order: number;
   schedule?: {
     allDays: boolean;
-    days: number[]; // 0 = Sunday, 1 = Monday, ...
+    days: number[];
     allHours: boolean;
-    startTime?: string; // "07:00"
-    endTime?: string; // "22:00"
+    startTime?: string;
+    endTime?: string;
   };
 }
 
@@ -31,7 +32,7 @@ export interface TickerConfig {
   speed: 'slow' | 'normal' | 'fast';
   bgColor: string;
   textColor: string;
-  fontSize: number; // in pixels
+  fontSize: number;
   showBadge: boolean;
   badgeText: string;
 }
@@ -40,9 +41,9 @@ export interface AudioConfig {
   enabled: boolean;
   url: string;
   title: string;
-  volume: number; // 0 - 100
+  volume: number;
   loop: boolean;
-  autoMuteOnVideo: boolean; // CRITICAL: auto-mute backsound when video plays
+  autoMuteOnVideo: boolean;
   fadeTransition: boolean;
 }
 
@@ -63,6 +64,8 @@ export interface LayoutConfig {
   logoUrl?: string;
   accentColor: string;
   sidebarTitle: string;
+  tvScale?: number;
+  sidebarFooterStyle?: 'none' | 'compact' | 'cards';
   prices: PriceItem[];
   infoCards: Array<{
     title: string;

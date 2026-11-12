@@ -14,7 +14,6 @@ import {
   Eye,
   EyeOff,
   Plus,
-  Calendar,
   Sparkles,
 } from 'lucide-react';
 
@@ -25,28 +24,37 @@ interface SlideManagerProps {
 
 export const SlideManager: React.FC<SlideManagerProps> = ({ slides, onChange }) => {
   const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [uploadStats, setUploadStats] = useState<string>('');
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [editingSlideId, setEditingSlideId] = useState<string | null>(null);
   const [newUrlInput, setNewUrlInput] = useState<string>('');
   const [newTitleInput, setNewTitleInput] = useState<string>('');
+  const [newTopTextInput, setNewTopTextInput] = useState<string>('');
   const [newTypeInput, setNewTypeInput] = useState<'image' | 'video'>('image');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Handle direct file upload (image or video)
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
+    setUploadProgress(0);
+    setUploadStats(`0% (0 MB / ${(file.size / (1024 * 1024)).toFixed(1)} MB)`);
     setUploadError(null);
 
     try {
       const isVideo = file.type.startsWith('video/');
-      const result = await uploadMedia(file);
+      const result = await uploadMedia(file, (percent, loaded, total) => {
+        setUploadProgress(percent);
+        const loadedMb = (loaded / (1024 * 1024)).toFixed(1);
+        const totalMb = (total / (1024 * 1024)).toFixed(1);
+        setUploadStats(`${percent}% (${loadedMb} MB / ${totalMb} MB)`);
+      });
 
       const newSlide: SlideItem = {
         id: `slide-${Date.now()}`,
         title: file.name.replace(/\.[^/.]+$/, ''),
+        topText: isVideo ? '🎬 Video Promosi' : '🖼️ Informasi Layanan',
         type: isVideo ? 'video' : 'image',
         url: result.url,
         duration: isVideo ? 15 : 8,
@@ -68,11 +76,12 @@ export const SlideManager: React.FC<SlideManagerProps> = ({ slides, onChange }) 
       setUploadError(err.message || 'Gagal mengunggah file media.');
     } finally {
       setIsUploading(false);
+      setUploadProgress(0);
+      setUploadStats('');
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
-  // Add slide from URL
   const handleAddFromUrl = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newUrlInput.trim()) return;
@@ -85,6 +94,7 @@ export const SlideManager: React.FC<SlideManagerProps> = ({ slides, onChange }) 
     const newSlide: SlideItem = {
       id: `slide-${Date.now()}`,
       title: newTitleInput.trim() || (isVideo ? 'Video Promosi Baru' : 'Gambar Banner Baru'),
+      topText: newTopTextInput.trim() || (isVideo ? '🎬 Video Promosi' : '🖼️ Informasi Layanan'),
       type: isVideo ? 'video' : 'image',
       url: newUrlInput.trim(),
       duration: isVideo ? 15 : 10,
@@ -104,23 +114,21 @@ export const SlideManager: React.FC<SlideManagerProps> = ({ slides, onChange }) 
     onChange([...slides, newSlide]);
     setNewUrlInput('');
     setNewTitleInput('');
+    setNewTopTextInput('');
   };
 
-  // Update specific slide property
   const updateSlide = (id: string, updates: Partial<SlideItem>) => {
     onChange(
       slides.map((s) => (s.id === id ? { ...s, ...updates } : s))
     );
   };
 
-  // Delete slide
   const deleteSlide = (id: string) => {
     if (confirm('Hapus slide ini dari antrian tayang TV?')) {
       onChange(slides.filter((s) => s.id !== id));
     }
   };
 
-  // Reorder slide
   const moveSlide = (index: number, direction: 'up' | 'down') => {
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= slides.length) return;
@@ -133,9 +141,7 @@ export const SlideManager: React.FC<SlideManagerProps> = ({ slides, onChange }) 
 
   return (
     <div className="space-y-6">
-      {/* Upload & Add Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Upload Card */}
         <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -162,17 +168,44 @@ export const SlideManager: React.FC<SlideManagerProps> = ({ slides, onChange }) 
             />
             <div className="w-14 h-14 rounded-2xl bg-teal-500/10 text-teal-400 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
               {isUploading ? (
-                <div className="w-7 h-7 border-2 border-teal-400 border-t-transparent rounded-full animate-spin" />
+                <div className="text-sm font-black font-mono text-teal-300">
+                  {uploadProgress}%
+                </div>
               ) : (
                 <Upload className="w-7 h-7" />
               )}
             </div>
             <p className="font-semibold text-white text-sm">
-              {isUploading ? 'Sedang Memproses Upload...' : 'Klik atau Tarik File Gambar/Video ke Sini'}
+              {isUploading ? `Mengunggah Media (${uploadProgress}%)...` : 'Klik atau Tarik File Gambar/Video ke Sini'}
             </p>
-            <p className="text-xs text-slate-400 mt-1">
-              File otomatis disimpan dan disinkronkan ke TV Player signage.jasminelaundry.my.id
-            </p>
+            {isUploading && (
+              <div className="w-full max-w-md mx-auto mt-3">
+                <div className="w-full h-3 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+                  <div
+                    className="h-full bg-gradient-to-r from-teal-500 to-emerald-400 transition-all duration-150 ease-out shadow-glow"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+                <div className="flex justify-between items-center text-xs text-slate-400 mt-1.5 font-mono">
+                  <span>Proses Streaming...</span>
+                  <span className="text-teal-300 font-bold">{uploadStats}</span>
+                </div>
+              </div>
+            )}
+            {!isUploading && (
+              <p className="text-xs text-slate-400 mt-1">
+                File langsung distreaming ke server VPS dan disinkronkan ke TV signage
+              </p>
+            )}
+          </div>
+
+          <div className="mt-3 p-3 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between text-xs">
+            <span className="text-slate-400">
+              💡 <b className="text-slate-300">Format Rekomendasi TV:</b> MP4 (Video: <b>H.264/AVC</b>, Audio: <b>AAC</b>, Max 1080p).
+            </span>
+            <span className="text-teal-400 font-mono text-[11px] bg-teal-500/10 px-2 py-0.5 rounded border border-teal-500/20">
+              Autoplay Android TV Ready
+            </span>
           </div>
 
           {uploadError && (
@@ -182,7 +215,6 @@ export const SlideManager: React.FC<SlideManagerProps> = ({ slides, onChange }) 
           )}
         </div>
 
-        {/* Add via URL Form */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
           <div>
             <h3 className="text-base font-bold text-white mb-2 flex items-center gap-2">
@@ -195,8 +227,21 @@ export const SlideManager: React.FC<SlideManagerProps> = ({ slides, onChange }) 
 
             <form onSubmit={handleAddFromUrl} className="space-y-3">
               <div>
+                <label className="text-xs font-semibold text-teal-400 block mb-1">
+                  Text Atas / Caption Baris 1
+                </label>
+                <input
+                  type="text"
+                  placeholder="Contoh: PROMO SPESIAL / INFORMASI LAYANAN"
+                  value={newTopTextInput}
+                  onChange={(e) => setNewTopTextInput(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-teal-300 text-xs font-medium focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              <div>
                 <label className="text-xs font-semibold text-slate-300 block mb-1">
-                  Judul Slide / Promosi
+                  Judul Slide / Caption Baris 2
                 </label>
                 <input
                   type="text"
@@ -262,7 +307,6 @@ export const SlideManager: React.FC<SlideManagerProps> = ({ slides, onChange }) 
         </div>
       </div>
 
-      {/* Slide Playlist Table / Cards */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
         <div className="flex items-center justify-between mb-5">
           <div>
@@ -271,7 +315,7 @@ export const SlideManager: React.FC<SlideManagerProps> = ({ slides, onChange }) 
               Daftar Putar Tayangan TV ({slides.length} Konten)
             </h3>
             <p className="text-xs text-slate-400">
-              Atur urutan pemutaran, durasi tayang gambar/video, dan perilaku audio saat video berputar.
+              Atur urutan pemutaran, durasi tayang gambar/video, dan caption teks atas &amp; bawah.
             </p>
           </div>
         </div>
@@ -292,9 +336,7 @@ export const SlideManager: React.FC<SlideManagerProps> = ({ slides, onChange }) 
                 }`}
               >
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                  {/* Left: Thumbnail & Details */}
                   <div className="flex items-center gap-4 flex-1">
-                    {/* Order Controls */}
                     <div className="flex flex-col items-center">
                       <button
                         onClick={() => moveSlide(idx, 'up')}
@@ -315,7 +357,6 @@ export const SlideManager: React.FC<SlideManagerProps> = ({ slides, onChange }) 
                       </button>
                     </div>
 
-                    {/* Preview Media */}
                     <div className="relative w-24 h-16 rounded-xl bg-slate-900 overflow-hidden border border-slate-700 flex items-center justify-center shrink-0">
                       {slide.type === 'video' ? (
                         <>
@@ -347,17 +388,37 @@ export const SlideManager: React.FC<SlideManagerProps> = ({ slides, onChange }) 
                       </span>
                     </div>
 
-                    {/* Title and metadata */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-[10px] font-bold text-teal-400 uppercase tracking-wider">
+                            Text Atas (Caption Baris 1):
+                          </label>
+                          <span className="text-[10px] text-slate-500">
+                            {slide.topText ? 'Kustom' : 'Otomatis'}
+                          </span>
+                        </div>
                         <input
                           type="text"
-                          value={slide.title}
-                          onChange={(e) => updateSlide(slide.id, { title: e.target.value })}
-                          className="font-bold text-white text-sm bg-transparent border-b border-transparent hover:border-slate-700 focus:border-teal-500 focus:bg-slate-900 px-1 py-0.5 rounded transition truncate"
+                          placeholder="Kosongkan jika ingin otomatis (Gambar • Slide x dari n)"
+                          value={slide.topText || ''}
+                          onChange={(e) => updateSlide(slide.id, { topText: e.target.value })}
+                          className="w-full text-xs font-semibold text-teal-300 bg-slate-900 border border-slate-700/80 hover:border-slate-600 focus:border-teal-500 focus:bg-slate-950 px-2.5 py-1.5 rounded-xl transition"
                         />
                       </div>
-                      <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-slate-400">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                          Judul Slide (Caption Baris 2):
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Judul Slide Promosi"
+                          value={slide.title}
+                          onChange={(e) => updateSlide(slide.id, { title: e.target.value })}
+                          className="w-full text-sm font-bold text-white bg-slate-900 border border-slate-700/80 hover:border-slate-600 focus:border-teal-500 focus:bg-slate-950 px-2.5 py-1.5 rounded-xl transition truncate"
+                        />
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-slate-400">
                         {slide.type === 'video' ? (
                           <span className="flex items-center gap-1 text-amber-300 font-medium">
                             <Volume2 className="w-3.5 h-3.5 text-amber-400" />
@@ -366,7 +427,7 @@ export const SlideManager: React.FC<SlideManagerProps> = ({ slides, onChange }) 
                               : 'Auto-Mute Backsound Aktif Saat Video Diputar'}
                           </span>
                         ) : (
-                          <span className="text-teal-300">
+                          <span className="text-teal-400/80">
                             🎵 Backsound BGM berputar di latar belakang
                           </span>
                         )}
@@ -374,9 +435,7 @@ export const SlideManager: React.FC<SlideManagerProps> = ({ slides, onChange }) 
                     </div>
                   </div>
 
-                  {/* Right: Duration, Controls & Actions */}
                   <div className="flex flex-wrap items-center gap-3">
-                    {/* Duration Settings */}
                     <div className="flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800">
                       <Clock className="w-3.5 h-3.5 text-teal-400" />
                       {slide.type === 'video' && slide.autoDuration ? (
@@ -402,7 +461,6 @@ export const SlideManager: React.FC<SlideManagerProps> = ({ slides, onChange }) 
                       )}
                     </div>
 
-                    {/* For Video: Auto-duration Toggle */}
                     {slide.type === 'video' && (
                       <button
                         onClick={() =>
@@ -419,7 +477,6 @@ export const SlideManager: React.FC<SlideManagerProps> = ({ slides, onChange }) 
                       </button>
                     )}
 
-                    {/* Transition Effect */}
                     <select
                       value={slide.transition}
                       onChange={(e) =>
@@ -433,7 +490,6 @@ export const SlideManager: React.FC<SlideManagerProps> = ({ slides, onChange }) 
                       <option value="none">Transisi: Langsung</option>
                     </select>
 
-                    {/* Active Toggle */}
                     <button
                       onClick={() => updateSlide(slide.id, { isActive: !slide.isActive })}
                       className={`p-2 rounded-xl transition ${
@@ -446,7 +502,6 @@ export const SlideManager: React.FC<SlideManagerProps> = ({ slides, onChange }) 
                       {slide.isActive ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                     </button>
 
-                    {/* Delete */}
                     <button
                       onClick={() => deleteSlide(slide.id)}
                       className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 transition"
@@ -457,13 +512,11 @@ export const SlideManager: React.FC<SlideManagerProps> = ({ slides, onChange }) 
                   </div>
                 </div>
 
-                {/* Video Audio Rules Info Banner for this slide */}
                 {slide.type === 'video' && (
                   <div className="mt-3 pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-400">
                     <span className="flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-teal-400" />
-                      Ketika video ini diputar di TV, browser TVBro akan otomatis membisukan lagu
-                      latar belakang (BGM) agar suara video terdengar jernih.
+                      Ketika video ini diputar di TV, backsound (BGM) otomatis dibisukan.
                     </span>
 
                     <button

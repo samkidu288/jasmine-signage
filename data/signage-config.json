@@ -1,0 +1,224 @@
+{
+  "slides": [
+    {
+      "id": "slide-1794381872536",
+      "title": "Besok berangkat? Cucian hari ini bisa siap tepat waktu!",
+      "type": "image",
+      "url": "/uploads/1794381872418-maupergi_v1.png",
+      "duration": 8,
+      "autoDuration": false,
+      "muteVideoAudio": false,
+      "videoVolume": 100,
+      "transition": "fade",
+      "isActive": true,
+      "order": 6,
+      "schedule": {
+        "allDays": true,
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "allHours": true
+      },
+      "topText": "CUCI LIPAT RAPI WANGI 1 HARI"
+    },
+    {
+      "id": "slide-1794381948080",
+      "title": "Pagi lebih tenang, tinggal pilih baju dan siap beraktivitas.",
+      "type": "image",
+      "url": "/uploads/1794381947955-cuci_setrika_v1.png",
+      "duration": 8,
+      "autoDuration": false,
+      "muteVideoAudio": false,
+      "videoVolume": 100,
+      "transition": "fade",
+      "isActive": true,
+      "order": 6,
+      "schedule": {
+        "allDays": true,
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "allHours": true
+      },
+      "topText": "CUCI SETRIKA WANGI 3 HARI"
+    },
+    {
+      "id": "slide-1794382778969",
+      "title": "Acara mendadak? Tenang, masih aman urusan cucian!",
+      "type": "image",
+      "url": "/uploads/1794382778846-cuci_ekspressv1.png",
+      "duration": 8,
+      "autoDuration": false,
+      "muteVideoAudio": false,
+      "videoVolume": 100,
+      "transition": "fade",
+      "isActive": true,
+      "order": 6,
+      "schedule": {
+        "allDays": true,
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "allHours": true
+      },
+      "topText": "CUCI LIPAT FAST TRACK - MAKSIMAL 6 JAM"
+    },
+    {
+      "id": "slide-1794382055240",
+      "title": "Nyaman tidur dimulai dari bedcover bersih segar.",
+      "type": "image",
+      "url": "/uploads/1794382055111-bedcover_v1.png",
+      "duration": 8,
+      "autoDuration": false,
+      "muteVideoAudio": false,
+      "videoVolume": 100,
+      "transition": "fade",
+      "isActive": true,
+      "order": 6,
+      "schedule": {
+        "allDays": true,
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "allHours": true
+      },
+      "topText": "CUCI BEDCOVER BESAR, SEDANG dan KECIL"
+    },
+    {
+      "id": "slide-1794381419756",
+      "title": "Kadang, aroma sederhana bisa bikin hati lebih nyaman.",
+      "type": "image",
+      "url": "/uploads/1794381419636-Aroma_melati_v1.png",
+      "duration": 8,
+      "autoDuration": false,
+      "muteVideoAudio": false,
+      "videoVolume": 100,
+      "transition": "fade",
+      "isActive": true,
+      "order": 6,
+      "schedule": {
+        "allDays": true,
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "allHours": true
+      },
+      "topText": "PARFUME HARUM"
+    }
+  ],
+  "ticker": {
+    "enabled": true,
+    "messages": [
+      "✨ Selamat Datang di JASMINE LAUNDRY - Pakaian Bersih, Wangi, Higienis & Rapi Setiap Hari",
+      "⚡ LAYANAN JALUR CEPAT (Maximal 6 Jam) : Cucian darurat langsung kering & rapi siap pakai",
+      "📞 WhatsApp : 0821-2859-4817 | Buka Setiap Hari: 08.00 - 20.00 WIB",
+      "Untuk Sementara Layanan SELF SERVICES TIDAK TERSEDIA"
+    ],
+    "separator": "   ✦   ",
+    "speed": "normal",
+    "bgColor": "#0f766e",
+    "textColor": "#ffffff",
+    "fontSize": 28,
+    "showBadge": true,
+    "badgeText": "INFO TERBARU"
+  },
+  "audio": {
+    "enabled": true,
+    "url": "/uploads/1793099639515-potongan_smooth_jazz.mp3",
+    "title": "potongan smooth jazz",
+    "volume": 55,
+    "loop": true,
+    "autoMuteOnVideo": true,
+    "fadeTransition": true
+  },
+  "layout": {
+    "style": "splitscreen",
+    "showClock": true,
+    "showDate": true,
+    "showLogo": false,
+    "brandName": "JASMINE LAUNDRY",
+    "tagline": "Professional Laundry Service",
+    "accentColor": "#0d9488",
+    "sidebarTitle": "DAFTAR LAYANAN & HARGA",
+    "prices": [
+      {
+        "name": "Cuci Lipat Rapi Wangi",
+        "price": "Rp 8.000",
+        "unit": "/ kg",
+        "badge": "Terlaris"
+      },
+      {
+        "name": "Cuci Setrika Wangi 3 hari",
+        "price": "Rp 10.000",
+        "unit": "/ kg",
+        "badge": "Terlaris"
+      },
+      {
+        "name": "Cuci Lipat Jalur Cepat ",
+        "price": "Rp 16.000",
+        "unit": "/ kg",
+        "badge": "Tanpa Antri"
+      },
+      {
+        "name": "Setrika Wangi 1 hari",
+        "price": "Rp 8.000",
+        "unit": "/ kg"
+      },
+      {
+        "name": "Bedcover Sedang (160)",
+        "price": "Rp 40.000",
+        "unit": "/ pcs"
+      },
+      {
+        "name": "Sprei Set Jumbo",
+        "price": "Rp 25.000",
+        "unit": "/ pcs",
+        "badge": ""
+      }
+    ],
+    "infoCards": [
+      {
+        "title": "Garansi Bersih & Wangi",
+        "description": "Jika kurang wangi atau kurang rapi, cuci ulang gratis tanpa biaya!",
+        "icon": "Sparkles"
+      },
+      {
+        "title": "Gratis Antar Jemput",
+        "description": "Radius 3 km untuk pemesanan minimal 5 kg. Hubungi admin kami.",
+        "icon": "Truck"
+      }
+    ]
+  },
+  "lastUpdated": "2026-11-12T03:13:32.383Z",
+  "version": 13
+}
